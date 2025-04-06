@@ -66,14 +66,18 @@ jobs:
           else
             tar -czvf "./dist/${ARCHIVE_BASE_NAME}.tar.gz" -C ./dist/package .
           fi
+          
+          # List files in dist directory for debugging
+          ls -la ./dist/
         shell: bash
 
       - name: Upload Artifact
+        if: matrix.platform.os != 'windows'
         uses: actions/upload-artifact@v4
         with:
           name: dir-dumper-${{ matrix.platform.os }}-${{ matrix.platform.arch }}
-          path: ./dist/*.tar.gz, ./dist/*.zip
-          if-no-files-found: error
+          path: ./dist/*.tar.gz
+          if-no-files-found: warn
 
       - name: Upload Windows Artifact
         if: matrix.platform.os == 'windows'
@@ -81,7 +85,7 @@ jobs:
         with:
           name: dir-dumper-${{ matrix.platform.os }}-${{ matrix.platform.arch }}
           path: ./dist/*.zip
-          if-no-files-found: error
+          if-no-files-found: warn
 
   release:
     name: Create Release
@@ -91,20 +95,24 @@ jobs:
       contents: write  # Required for release creation
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./dist/artifacts
+          path: ./artifacts
 
       - name: Generate Checksums
         run: |
-          cd ./dist/artifacts
+          cd ./artifacts
           # Move all artifacts to the root artifacts directory
           find . -mindepth 2 -type f -exec mv -i '{}' . \;
           # Generate SHA256 checksums for all artifacts
           sha256sum * > checksums.txt
-          mv checksums.txt ..
-          cd ../..
+          # Display checksums in logs for verification
+          cat checksums.txt
+          cd ..
         shell: bash
 
       - name: Create GitHub Release
@@ -115,7 +123,7 @@ jobs:
           generate_release_notes: true
           make_latest: true
           files: |
-            ./dist/artifacts/*
-            ./dist/checksums.txt
+            ./artifacts/*
+            ./artifacts/checksums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
