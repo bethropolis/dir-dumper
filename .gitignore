@@ -1,5 +1,5 @@
 # Binaries
-dir-dumper
+/dir-dumper
 *.exe
 *.exe~
 *.dll
