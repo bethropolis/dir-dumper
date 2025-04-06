@@ -52,13 +52,19 @@ jobs:
           BINARY_NAME="dir-dumper"
           ARCHIVE_BASE_NAME="${BINARY_NAME}-${{ github.ref_name }}-${{ matrix.platform.os }}-${{ matrix.platform.arch }}"
           SOURCE_BINARY="./dist/${BINARY_NAME}-${{ matrix.platform.os }}-${{ matrix.platform.arch }}"
-
+          
+          # Create a temporary directory for packaging
+          mkdir -p ./dist/package
+          
+          # Copy binary and README to package directory
+          cp "${SOURCE_BINARY}$([ "${{ matrix.platform.os }}" = "windows" ] && echo ".exe" || echo "")" ./dist/package/
+          cp README.md ./dist/package/
+          
           # Create different archive types based on target OS
           if [ "${{ matrix.platform.os }}" = "windows" ]; then
-            SOURCE_BINARY="${SOURCE_BINARY}.exe"
-            7z a "./dist/${ARCHIVE_BASE_NAME}.zip" "${SOURCE_BINARY}" README.md
+            7z a "./dist/${ARCHIVE_BASE_NAME}.zip" "./dist/package/*"
           else
-            tar -czvf "./dist/${ARCHIVE_BASE_NAME}.tar.gz" -C ./dist "${SOURCE_BINARY##*/}" README.md
+            tar -czvf "./dist/${ARCHIVE_BASE_NAME}.tar.gz" -C ./dist/package .
           fi
         shell: bash
 
