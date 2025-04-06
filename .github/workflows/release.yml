@@ -3,8 +3,8 @@ name: Release Go Binaries
 # Trigger workflow only when a tag is pushed that matches the pattern v*
 on:
   push:
-    tags:
-      - 'v*'
+    # tags:
+    #   - 'v*'
 
 permissions:
   contents: write  # Required for creating releases
