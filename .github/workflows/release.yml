@@ -31,6 +31,9 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
+      - name: Create output directory
+        run: mkdir -p ./dist
+
       - name: Build
         env:
           GOOS: ${{ matrix.platform.os }}
@@ -44,30 +47,31 @@ jobs:
           OUTPUT_PATH="./dist/${BINARY_NAME}-${{ matrix.platform.os }}-${{ matrix.platform.arch }}"
           # Build with optimization flags
           go build -trimpath -ldflags="-s -w" -o $OUTPUT_PATH ./cmd/dir-dumper/
-          # List files in dist directory for debugging
-          ls -la ./dist/
         shell: bash
+
+      - name: List dist directory
+        run: ls -la ./dist
 
       - name: Create Archive
         run: |
           BINARY_NAME="dir-dumper"
           ARCHIVE_BASE_NAME="${BINARY_NAME}-${{ github.ref_name }}-${{ matrix.platform.os }}-${{ matrix.platform.arch }}"
           SOURCE_BINARY="./dist/${BINARY_NAME}-${{ matrix.platform.os }}-${{ matrix.platform.arch }}"
-
+          
           # Create a temporary directory for packaging
           mkdir -p ./dist/package
-
+          
           # Copy binary and README to package directory
           cp "${SOURCE_BINARY}$([ "${{ matrix.platform.os }}" = "windows" ] && echo ".exe" || echo "")" ./dist/package/
           cp README.md ./dist/package/
-
+          
           # Create different archive types based on target OS
           if [ "${{ matrix.platform.os }}" = "windows" ]; then
             7z a "./dist/${ARCHIVE_BASE_NAME}.zip" "./dist/package/*"
           else
             tar -czvf "./dist/${ARCHIVE_BASE_NAME}.tar.gz" -C ./dist/package .
           fi
-
+          
           # List files in dist directory for debugging
           ls -la ./dist/
         shell: bash
