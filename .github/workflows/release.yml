@@ -120,8 +120,9 @@ jobs:
       - name: Generate Checksums
         run: |
           cd ./artifacts
+          ls -la
           # Move all artifacts to the root artifacts directory
-          find . -mindepth 2 -type f -exec mv -i '{}' . \;
+          find . -type f -exec sha256sum '{}' \; > checksums.txt
           # Generate SHA256 checksums for all artifacts
           sha256sum * > checksums.txt
           # Display checksums in logs for verification
