@@ -72,7 +72,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dir-dumper-${{ matrix.platform.os }}-${{ matrix.platform.arch }}
-          path: ./dist/*.tar.gz
+          path: ./dist/*.tar.gz, ./dist/*.zip
           if-no-files-found: error
 
       - name: Upload Windows Artifact
