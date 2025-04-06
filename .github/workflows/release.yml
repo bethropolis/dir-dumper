@@ -2,8 +2,8 @@ name: Release Go Binaries
 
 on:
   push:
-    # tags:
-    #   - 'v*'
+    tags:
+      - 'v*'
 
 permissions:
   contents: write  # Required for creating releases
@@ -117,17 +117,28 @@ jobs:
         with:
           path: ./artifacts
 
-      - name: Generate Checksums
+      - name: Process Artifacts for Release
         run: |
-          cd ./artifacts
+          # First look at the directory structure
+          echo "Initial directory structure:"
+          find ./artifacts -type f | sort
+          
+          # Create a directory for processed files
+          mkdir -p ./release-files
+          
+          # Find and move all artifact files to the release directory
+          find ./artifacts -type f -name "*.tar.gz" -o -name "*.zip" | while read file; do
+            cp "$file" ./release-files/
+          done
+          
+          # Generate checksums for the files in release directory
+          cd ./release-files
+          echo "Files to be released:"
           ls -la
-          # Move all artifacts to the root artifacts directory
-          find . -type f -exec sha256sum '{}' \; > checksums.txt
+          
           # Generate SHA256 checksums for all artifacts
           sha256sum * > checksums.txt
-          # Display checksums in logs for verification
           cat checksums.txt
-          cd ..
         shell: bash
 
       - name: Create GitHub Release
@@ -138,7 +149,6 @@ jobs:
           generate_release_notes: true
           make_latest: true
           files: |
-            ./artifacts/*
-            ./artifacts/checksums.txt
+            ./release-files/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
