@@ -1,9 +1,20 @@
 name: Release Go Binaries
 
+# Trigger workflow on tag push or manual dispatch
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g., v1.0.0)'
+        required: true
+        default: 'manual-release'
+      release_name:
+        description: 'Name of the release'
+        required: false
+        default: 'Manual Release'
 
 permissions:
   contents: write  # Required for creating releases
@@ -141,11 +152,24 @@ jobs:
           cat checksums.txt
         shell: bash
 
+      - name: Set release info
+        id: release_info
+        run: |
+          # Set tag name - use input value if manually triggered, otherwise use git ref
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+            echo "RELEASE_NAME=${{ github.event.inputs.release_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "RELEASE_NAME=Release ${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Release ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
+          name: ${{ steps.release_info.outputs.RELEASE_NAME }}
+          tag_name: ${{ steps.release_info.outputs.TAG_NAME }}
           generate_release_notes: true
           make_latest: true
           files: |
